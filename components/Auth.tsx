@@ -1,21 +1,22 @@
 
 import React, { useState } from 'react';
-import { Heart, Mail, Lock, User, ArrowRight, Sparkles } from 'lucide-react';
+import { Heart, Mail, Lock, User, ArrowRight, Sparkles, Eye, EyeOff } from 'lucide-react';
 
 interface AuthProps {
-  onLogin: (email: string, name: string) => void;
+  onLogin: (email: string, name: string, password?: string) => void;
 }
 
 const Auth: React.FC<AuthProps> = ({ onLogin }) => {
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [name, setName] = useState('');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const displayName = isLogin ? (email.split('@')[0]) : name;
-    onLogin(email, displayName);
+    onLogin(email, displayName, password);
   };
 
   return (
@@ -85,13 +86,20 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
               <div className="relative">
                 <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-slate-400 pointer-events-none" />
                 <input 
-                  type="password" 
+                  type={showPassword ? "text" : "password"} 
                   required 
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
-                  className="w-full pl-10 sm:pl-12 pr-4 py-3 sm:py-3.5 bg-slate-50 dark:bg-slate-800 border-none rounded-xl sm:rounded-2xl focus:ring-2 focus:ring-rose-400 outline-none transition-all dark:text-white text-sm"
+                  className="w-full pl-10 sm:pl-12 pr-12 py-3 sm:py-3.5 bg-slate-50 dark:bg-slate-800 border-none rounded-xl sm:rounded-2xl focus:ring-2 focus:ring-rose-400 outline-none transition-all dark:text-white text-sm"
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-rose-500 transition-colors"
+                >
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
               </div>
             </div>
 

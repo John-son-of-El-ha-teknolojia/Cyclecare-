@@ -8,24 +8,57 @@ import Settings from './components/Settings.tsx';
 import Auth from './components/Auth.tsx';
 import { UserProfile } from './types.ts';
 import { Menu, X, Heart } from 'lucide-react';
+import { dbService } from './utils/db.ts';
 
+/**
+ * CycleCare+ Main Application
+ * Persistent cycle tracking powered by IndexedDB.
+ */
 const App: React.FC = () => {
-  const [authEmail, setAuthEmail] = useState<string | null>(() => localStorage.getItem('cyclecare_auth_email'));
-  const [authName, setAuthName] = useState<string>(() => localStorage.getItem('cyclecare_auth_name') || '');
+  // Authentication & Profile State
+  const [authEmail, setAuthEmail] = useState<string | null>(null);
+  const [authName, setAuthName] = useState<string>('');
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  
+  // App UI State
+  const [isAppLoading, setIsAppLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('calendar');
   const [darkMode, setDarkMode] = useState(() => localStorage.getItem('cyclecare_dark_mode') === 'true');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
+  // Initialize: Restore Session from Database
   useEffect(() => {
-    if (authEmail) {
-      const db = JSON.parse(localStorage.getItem('cyclecare_db_profiles') || '{}');
-      setUserProfile(db[authEmail] || null);
-    } else {
-      setUserProfile(null);
-    }
+    const initApp = async () => {
+      try {
+        const session = await dbService.getActiveSession();
+        if (session) {
+          setAuthEmail(session.email);
+          setAuthName(session.name);
+          // Identity found, profile fetch will trigger via effect
+        }
+      } catch (err) {
+        console.error("Failed to restore session from database:", err);
+      } finally {
+        setIsAppLoading(false);
+      }
+    };
+    initApp();
+  }, []);
+
+  // Profile Synchronization: Fetch from Database when identity changes
+  useEffect(() => {
+    const fetchProfile = async () => {
+      if (authEmail) {
+        const profile = await dbService.getProfile(authEmail);
+        setUserProfile(profile);
+      } else {
+        setUserProfile(null);
+      }
+    };
+    fetchProfile();
   }, [authEmail]);
 
+  // Global Appearance Effects
   useEffect(() => {
     localStorage.setItem('cyclecare_dark_mode', String(darkMode));
     if (darkMode) {
@@ -35,54 +68,84 @@ const App: React.FC = () => {
     }
   }, [darkMode]);
 
-  const handleLogin = (email: string, name: string) => {
-    setAuthEmail(email);
-    setAuthName(name);
-    localStorage.setItem('cyclecare_auth_email', email);
-    localStorage.setItem('cyclecare_auth_name', name);
+  const handleLogin = async (email: string, name: string, password?: string) => {
+    setIsAppLoading(true);
+    try {
+      const existing = await dbService.getProfile(email);
+      if (existing && password && existing.password !== password) {
+        alert("Incorrect password for this account.");
+        setIsAppLoading(false);
+        return;
+      }
+      
+      await dbService.saveSession(email, name);
+      setAuthEmail(email);
+      setAuthName(name);
+    } catch (err) {
+      console.error("Login Error:", err);
+    } finally {
+      setIsAppLoading(false);
+    }
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    await dbService.clearSession();
     setAuthEmail(null);
     setAuthName('');
-    localStorage.removeItem('cyclecare_auth_email');
-    localStorage.removeItem('cyclecare_auth_name');
+    setUserProfile(null);
     setActiveTab('calendar');
   };
 
-  const handleSaveProfile = (profile: UserProfile) => {
+  const handleSaveProfile = async (profile: UserProfile) => {
     if (!authEmail) return;
-    const db = JSON.parse(localStorage.getItem('cyclecare_db_profiles') || '{}');
-    db[authEmail] = profile;
-    localStorage.setItem('cyclecare_db_profiles', JSON.stringify(db));
-    setUserProfile(profile);
-    setActiveTab('calendar');
+    try {
+      // Ensure the profile is linked to the current identity's email
+      const profileToSave = { ...profile, email: authEmail };
+      await dbService.saveProfile(authEmail, profileToSave);
+      setUserProfile(profileToSave);
+      setActiveTab('calendar');
+    } catch (err) {
+      console.error("Error saving profile to database:", err);
+    }
   };
 
-  const handleUpdatePeriodDate = (newDate: string) => {
+  const handleUpdatePeriodDate = async (newDate: string) => {
     if (!authEmail || !userProfile) return;
     const updatedProfile = { ...userProfile, lastPeriodStart: newDate };
-    handleSaveProfile(updatedProfile);
+    await handleSaveProfile(updatedProfile);
   };
 
-  const handleDeleteProfile = () => {
+  const handleDeleteProfile = async () => {
     if (!authEmail) return;
-    const db = JSON.parse(localStorage.getItem('cyclecare_db_profiles') || '{}');
-    delete db[authEmail];
-    localStorage.setItem('cyclecare_db_profiles', JSON.stringify(db));
-    setUserProfile(null);
+    if (confirm("Are you sure you want to delete this tracking profile?")) {
+      await dbService.deleteProfile(authEmail);
+      setUserProfile(null);
+    }
   };
+
+  if (isAppLoading) {
+    return (
+      <div className="h-screen w-screen flex flex-col items-center justify-center bg-slate-50 dark:bg-slate-950">
+        <Heart className="w-16 h-16 text-rose-500 fill-current animate-pulse" />
+        <p className="mt-6 text-sm font-bold text-slate-400 uppercase tracking-widest animate-pulse">Syncing Database...</p>
+      </div>
+    );
+  }
+
+  if (!authEmail) {
+    return <Auth onLogin={handleLogin} />;
+  }
 
   const renderContent = () => {
     if (!userProfile) {
       return (
         <div className="min-h-full flex flex-col items-center justify-center text-center p-4 animate-in fade-in zoom-in duration-500">
-          <div className="w-20 h-20 sm:w-28 sm:h-28 bg-rose-100 dark:bg-rose-900/30 rounded-[1.5rem] sm:rounded-[2rem] flex items-center justify-center mb-6 sm:mb-10 shadow-xl shadow-rose-100 dark:shadow-none">
-            <Heart className="w-10 h-10 sm:w-14 sm:h-14 text-rose-500 fill-current" />
+          <div className="w-20 h-20 bg-rose-100 dark:bg-rose-900/30 rounded-[1.5rem] flex items-center justify-center mb-10 shadow-xl">
+            <Heart className="w-10 h-10 text-rose-500 fill-current" />
           </div>
-          <h2 className="text-3xl sm:text-4xl font-serif font-bold text-slate-800 dark:text-slate-100 mb-2 sm:mb-4 tracking-tight">Welcome, {authName}</h2>
-          <p className="text-slate-500 dark:text-slate-400 max-w-xs sm:max-w-sm mb-10 sm:mb-16 text-base sm:text-lg leading-relaxed">
-            Configure your cycle profile to get accurate predictions and daily support.
+          <h2 className="text-3xl font-serif font-bold text-slate-800 dark:text-slate-100 mb-4 tracking-tight">Welcome, {authName}</h2>
+          <p className="text-slate-500 dark:text-slate-400 max-w-sm mb-16 text-lg leading-relaxed">
+            Create your tracking profile to start predicting your cycle phases.
           </p>
           <AddUserForm onAdd={handleSaveProfile} />
         </div>
@@ -106,10 +169,6 @@ const App: React.FC = () => {
         return null;
     }
   };
-
-  if (!authEmail) {
-    return <Auth onLogin={handleLogin} />;
-  }
 
   return (
     <div className="flex h-screen overflow-hidden bg-slate-50 dark:bg-slate-950">
@@ -154,14 +213,14 @@ const App: React.FC = () => {
       </aside>
 
       <main className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
-        <header className="lg:hidden flex items-center justify-between px-4 py-3 sm:px-6 sm:py-4 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 shadow-sm z-30">
+        <header className="lg:hidden flex items-center justify-between px-4 py-3 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 shadow-sm z-30">
           <button 
             onClick={() => setIsSidebarOpen(true)}
             className="p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
           >
             <Menu className="w-6 h-6 text-slate-700 dark:text-slate-200" />
           </button>
-          <div className="font-serif font-bold text-rose-500 text-lg sm:text-xl flex items-center tracking-tight">
+          <div className="font-serif font-bold text-rose-500 text-lg flex items-center tracking-tight">
             <Heart className="w-5 h-5 mr-2 fill-current" />
             CycleCare+
           </div>

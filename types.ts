@@ -4,6 +4,8 @@ export type CyclePhase = 'Menstrual' | 'Follicular' | 'Ovulation' | 'Luteal';
 export interface UserProfile {
   id: string;
   name: string;
+  email?: string; // Linked for database lookup
+  password?: string; // Stored for verification
   lastPeriodStart: string; // ISO String
   cycleLength: number;
   periodDuration: number;
