@@ -71,6 +71,12 @@ const App: React.FC = () => {
     setActiveTab('calendar');
   };
 
+  const handleUpdatePeriodDate = (newDate: string) => {
+    if (!authEmail || !userProfile) return;
+    const updatedProfile = { ...userProfile, lastPeriodStart: newDate };
+    handleSaveProfile(updatedProfile);
+  };
+
   const handleDeleteProfile = () => {
     if (!authEmail) return;
     const db = JSON.parse(localStorage.getItem('cyclecare_db_profiles') || '{}');
@@ -83,12 +89,12 @@ const App: React.FC = () => {
     if (!userProfile) {
       return (
         <div className="h-full flex flex-col items-center justify-center text-center p-8 animate-in fade-in zoom-in duration-500">
-          <div className="w-24 h-24 bg-rose-100 dark:bg-rose-900/30 rounded-full flex items-center justify-center mb-6">
+          <div className="w-24 h-24 bg-rose-100 dark:bg-rose-900/30 rounded-full flex items-center justify-center mb-6 shadow-lg shadow-rose-100 dark:shadow-none">
             <Heart className="w-12 h-12 text-rose-500 fill-current" />
           </div>
-          <h2 className="text-3xl font-serif font-bold text-slate-800 dark:text-slate-100 mb-4">Hello, {authName}</h2>
-          <p className="text-slate-500 dark:text-slate-400 max-w-sm mb-8">
-            You haven't set up your tracking profile yet. Let's create one specifically for your cycle.
+          <h2 className="text-4xl font-serif font-bold text-slate-800 dark:text-slate-100 mb-4 tracking-tight">Hello, {authName}</h2>
+          <p className="text-slate-500 dark:text-slate-400 max-w-sm mb-12 text-lg">
+            Let's create a personalized profile to start tracking your unique cycle.
           </p>
           <AddUserForm onAdd={handleSaveProfile} />
         </div>
@@ -97,7 +103,7 @@ const App: React.FC = () => {
 
     switch (activeTab) {
       case 'calendar':
-        return <Calendar user={userProfile} />;
+        return <Calendar user={userProfile} onUpdatePeriod={handleUpdatePeriodDate} />;
       case 'suggestions':
         return <DailySuggestions user={userProfile} />;
       case 'settings':
@@ -166,7 +172,10 @@ const App: React.FC = () => {
           >
             <Menu className="w-6 h-6" />
           </button>
-          <div className="font-serif font-bold text-rose-500 text-lg">CycleCare+</div>
+          <div className="font-serif font-bold text-rose-500 text-lg flex items-center">
+            <Heart className="w-5 h-5 mr-2 fill-current" />
+            CycleCare+
+          </div>
           <div className="w-10" />
         </header>
 
