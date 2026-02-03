@@ -22,7 +22,7 @@ const DailySuggestions: React.FC<DailySuggestionsProps> = ({ user }) => {
     setError(null);
     try {
       // Assuming process.env.API_KEY is correctly injected by the build tool/platform
-      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+      const ai = new GoogleGenAI({ apiKey: process.env.VITE_API_KEY });
       const response = await ai.models.generateContent({
         model: 'gemini-3-flash-preview',
         contents: `The user is currently in the ${phase} phase (Day ${dayOfCycle} of a ${user.cycleLength}-day cycle). 
