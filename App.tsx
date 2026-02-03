@@ -1,13 +1,13 @@
 
-import React, { useState, useEffect, useMemo } from 'react';
-import Sidebar from './components/Sidebar';
-import Calendar from './components/Calendar';
-import AddUserForm from './components/AddUserForm';
-import DailySuggestions from './components/DailySuggestions';
-import Settings from './components/Settings';
-import Auth from './components/Auth';
-import { UserProfile } from './types';
-import { Menu, X, Plus, Heart } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import Sidebar from './components/Sidebar.tsx';
+import Calendar from './components/Calendar.tsx';
+import AddUserForm from './components/AddUserForm.tsx';
+import DailySuggestions from './components/DailySuggestions.tsx';
+import Settings from './components/Settings.tsx';
+import Auth from './components/Auth.tsx';
+import { UserProfile } from './types.ts';
+import { Menu, X, Heart } from 'lucide-react';
 
 const App: React.FC = () => {
   // Authentication State
