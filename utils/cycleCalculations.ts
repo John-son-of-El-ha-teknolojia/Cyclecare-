@@ -8,7 +8,7 @@ import { UserProfile, CyclePhase } from '../types.ts';
 
 /**
  * Calculates the current phase of the cycle for a given date based on user profile.
- * Uses a timezone-safe approach to parsing the lastPeriodStart string.
+ * Ensures the 'Menstrual' phase starts exactly on the recorded Day 1.
  */
 export const getCycleInfo = (date: Date, user: UserProfile) => {
   const checkDate = startOfDay(date);
@@ -17,18 +17,14 @@ export const getCycleInfo = (date: Date, user: UserProfile) => {
   const [year, month, day] = user.lastPeriodStart.split('-').map(Number);
   const cycleStart = startOfDay(new Date(year, month - 1, day));
   
-  // Calculate days since the last period started
-  let daysSinceStart = differenceInDays(checkDate, cycleStart);
+  // Calculate raw days difference
+  const rawDiff = differenceInDays(checkDate, cycleStart);
   
-  // Handle backwards projection for previous cycles or wrapping around
-  if (daysSinceStart < 0) {
-    const cyclesBack = Math.ceil(Math.abs(daysSinceStart) / user.cycleLength);
-    daysSinceStart = (daysSinceStart + (cyclesBack * user.cycleLength)) % user.cycleLength;
-  } else {
-    daysSinceStart = daysSinceStart % user.cycleLength;
-  }
+  // Robust modulo operation that works for both positive and negative numbers
+  // This allows us to project the cycle infinitely in both directions
+  let daysSinceStart = ((rawDiff % user.cycleLength) + user.cycleLength) % user.cycleLength;
 
-  const dayOfCycle = daysSinceStart + 1; // 1-indexed for the UI
+  const dayOfCycle = daysSinceStart + 1; // 1-indexed (Day 1, Day 2...)
 
   const ovulationDay = user.cycleLength - 14;
   const fertileWindowStart = ovulationDay - 2;
@@ -37,7 +33,7 @@ export const getCycleInfo = (date: Date, user: UserProfile) => {
   let phase: CyclePhase = 'Follicular';
   let isFertile = false;
 
-  // 1. Menstrual: Day 1 to periodDuration (usually 5 days)
+  // 1. Menstrual: Day 1 through periodDuration
   if (dayOfCycle <= user.periodDuration) {
     phase = 'Menstrual';
   } 
@@ -46,11 +42,11 @@ export const getCycleInfo = (date: Date, user: UserProfile) => {
     phase = 'Ovulation';
     isFertile = true;
   } 
-  // 3. Follicular: Between period and ovulation
+  // 3. Follicular: Days between period and ovulation
   else if (dayOfCycle < fertileWindowStart) {
     phase = 'Follicular';
   } 
-  // 4. Luteal: After ovulation until next period
+  // 4. Luteal: Days after ovulation until the next period
   else {
     phase = 'Luteal';
   }
@@ -64,7 +60,8 @@ export const getNextPeriodDate = (user: UserProfile) => {
   const today = startOfDay(new Date());
   
   let nextDate = addDays(lastStart, user.cycleLength);
-  while (nextDate < today) {
+  // Keep projecting forward until we find the date after today
+  while (nextDate <= today) {
     nextDate = addDays(nextDate, user.cycleLength);
   }
   
