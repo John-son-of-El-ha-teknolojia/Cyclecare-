@@ -9,30 +9,14 @@ import Auth from './components/Auth.tsx';
 import { UserProfile } from './types.ts';
 import { Menu, X, Heart } from 'lucide-react';
 
-/**
- * CycleCare+ Persistence Layer
- * We use a structured JSON store in localStorage to simulate a database (MongoDB-like persistence).
- * Each user account (identified by email) maintains its own cycle profile.
- */
 const App: React.FC = () => {
-  // Authentication State
-  const [authEmail, setAuthEmail] = useState<string | null>(() => {
-    return localStorage.getItem('cyclecare_auth_email');
-  });
-  const [authName, setAuthName] = useState<string>(() => {
-    return localStorage.getItem('cyclecare_auth_name') || '';
-  });
-
-  // Cycle Profile State
+  const [authEmail, setAuthEmail] = useState<string | null>(() => localStorage.getItem('cyclecare_auth_email'));
+  const [authName, setAuthName] = useState<string>(() => localStorage.getItem('cyclecare_auth_name') || '');
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
-  
   const [activeTab, setActiveTab] = useState('calendar');
-  const [darkMode, setDarkMode] = useState(() => {
-    return localStorage.getItem('cyclecare_dark_mode') === 'true';
-  });
+  const [darkMode, setDarkMode] = useState(() => localStorage.getItem('cyclecare_dark_mode') === 'true');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
-  // Sync Profile from "Database" when identity changes
   useEffect(() => {
     if (authEmail) {
       const db = JSON.parse(localStorage.getItem('cyclecare_db_profiles') || '{}');
@@ -42,7 +26,6 @@ const App: React.FC = () => {
     }
   }, [authEmail]);
 
-  // Sync Appearance settings
   useEffect(() => {
     localStorage.setItem('cyclecare_dark_mode', String(darkMode));
     if (darkMode) {
@@ -67,31 +50,15 @@ const App: React.FC = () => {
     setActiveTab('calendar');
   };
 
-  /**
-   * Saves the profile to the persistent store.
-   * This is our 'Database Save' operation.
-   */
   const handleSaveProfile = (profile: UserProfile) => {
     if (!authEmail) return;
-    
-    // 1. Get current "DB"
     const db = JSON.parse(localStorage.getItem('cyclecare_db_profiles') || '{}');
-    
-    // 2. Upsert the profile
     db[authEmail] = profile;
-    
-    // 3. Persist to storage
     localStorage.setItem('cyclecare_db_profiles', JSON.stringify(db));
-    
-    // 4. Update memory state
     setUserProfile(profile);
     setActiveTab('calendar');
   };
 
-  /**
-   * Updates specifically the period start date.
-   * Useful for "Log New Period" without re-entering name/cycle length.
-   */
   const handleUpdatePeriodDate = (newDate: string) => {
     if (!authEmail || !userProfile) return;
     const updatedProfile = { ...userProfile, lastPeriodStart: newDate };
@@ -109,13 +76,13 @@ const App: React.FC = () => {
   const renderContent = () => {
     if (!userProfile) {
       return (
-        <div className="h-full flex flex-col items-center justify-center text-center p-8 animate-in fade-in zoom-in duration-500">
-          <div className="w-28 h-28 bg-rose-100 dark:bg-rose-900/30 rounded-[2rem] flex items-center justify-center mb-10 shadow-xl shadow-rose-100 dark:shadow-none">
-            <Heart className="w-14 h-14 text-rose-500 fill-current" />
+        <div className="min-h-full flex flex-col items-center justify-center text-center p-4 animate-in fade-in zoom-in duration-500">
+          <div className="w-20 h-20 sm:w-28 sm:h-28 bg-rose-100 dark:bg-rose-900/30 rounded-[1.5rem] sm:rounded-[2rem] flex items-center justify-center mb-6 sm:mb-10 shadow-xl shadow-rose-100 dark:shadow-none">
+            <Heart className="w-10 h-10 sm:w-14 sm:h-14 text-rose-500 fill-current" />
           </div>
-          <h2 className="text-4xl font-serif font-bold text-slate-800 dark:text-slate-100 mb-4 tracking-tight">Welcome, {authName}</h2>
-          <p className="text-slate-500 dark:text-slate-400 max-w-sm mb-16 text-lg leading-relaxed">
-            Configure your cycle profile to get accurate phase predictions and daily support.
+          <h2 className="text-3xl sm:text-4xl font-serif font-bold text-slate-800 dark:text-slate-100 mb-2 sm:mb-4 tracking-tight">Welcome, {authName}</h2>
+          <p className="text-slate-500 dark:text-slate-400 max-w-xs sm:max-w-sm mb-10 sm:mb-16 text-base sm:text-lg leading-relaxed">
+            Configure your cycle profile to get accurate predictions and daily support.
           </p>
           <AddUserForm onAdd={handleSaveProfile} />
         </div>
@@ -146,7 +113,7 @@ const App: React.FC = () => {
 
   return (
     <div className="flex h-screen overflow-hidden bg-slate-50 dark:bg-slate-950">
-      <aside className="hidden lg:block w-72 h-full">
+      <aside className="hidden lg:block w-72 h-full flex-shrink-0">
         <Sidebar 
           activeTab={activeTab} 
           setActiveTab={setActiveTab} 
@@ -158,15 +125,13 @@ const App: React.FC = () => {
         />
       </aside>
 
-      {/* Mobile Sidebar Overlay */}
       {isSidebarOpen && (
         <div 
-          className="fixed inset-0 z-40 lg:hidden bg-slate-900/50 backdrop-blur-sm"
+          className="fixed inset-0 z-40 lg:hidden bg-slate-900/60 backdrop-blur-sm transition-opacity duration-300"
           onClick={() => setIsSidebarOpen(false)}
         />
       )}
       
-      {/* Mobile Sidebar */}
       <aside className={`fixed inset-y-0 left-0 z-50 w-72 bg-white dark:bg-slate-900 transform transition-transform duration-300 lg:hidden shadow-2xl ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
         <Sidebar 
           activeTab={activeTab} 
@@ -182,30 +147,28 @@ const App: React.FC = () => {
         />
         <button 
           onClick={() => setIsSidebarOpen(false)}
-          className="absolute top-6 right-6 p-2 rounded-xl bg-slate-100 dark:bg-slate-800 lg:hidden transition-transform active:scale-90"
+          className="absolute top-6 right-4 p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 lg:hidden transition-transform active:scale-90"
         >
           <X className="w-5 h-5 text-slate-600 dark:text-slate-300" />
         </button>
       </aside>
 
       <main className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
-        {/* Mobile Header */}
-        <header className="lg:hidden flex items-center justify-between px-6 py-5 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 shadow-sm">
+        <header className="lg:hidden flex items-center justify-between px-4 py-3 sm:px-6 sm:py-4 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 shadow-sm z-30">
           <button 
             onClick={() => setIsSidebarOpen(true)}
-            className="p-2.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+            className="p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
           >
             <Menu className="w-6 h-6 text-slate-700 dark:text-slate-200" />
           </button>
-          <div className="font-serif font-bold text-rose-500 text-xl flex items-center tracking-tight">
+          <div className="font-serif font-bold text-rose-500 text-lg sm:text-xl flex items-center tracking-tight">
             <Heart className="w-5 h-5 mr-2 fill-current" />
             CycleCare+
           </div>
           <div className="w-10" />
         </header>
 
-        {/* Content Area */}
-        <div className="flex-1 overflow-y-auto p-6 md:p-10 lg:p-14 bg-slate-50 dark:bg-slate-950">
+        <div className="flex-1 overflow-y-auto p-4 sm:p-6 md:p-10 lg:p-14 bg-slate-50 dark:bg-slate-950">
           <div className="max-w-5xl mx-auto h-full">
             {renderContent()}
           </div>
