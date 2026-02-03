@@ -1,22 +1,21 @@
 
 import React, { useState } from 'react';
-import { Heart, Mail, Lock, User, ArrowRight, Sparkles, Eye, EyeOff } from 'lucide-react';
+import { Heart, User, ArrowRight, Sparkles, Fingerprint } from 'lucide-react';
 
 interface AuthProps {
-  onLogin: (email: string, name: string, password?: string) => void;
+  onLogin: (email: string, name: string) => void;
 }
 
 const Auth: React.FC<AuthProps> = ({ onLogin }) => {
-  const [isLogin, setIsLogin] = useState(true);
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
-  const [name, setName] = useState('');
+  const [identifier, setIdentifier] = useState('');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const displayName = isLogin ? (email.split('@')[0]) : name;
-    onLogin(email, displayName, password);
+    if (!identifier.trim()) return;
+    
+    // Normalize to handle both emails and simple names
+    const name = identifier.split('@')[0];
+    onLogin(identifier.toLowerCase().trim(), name);
   };
 
   return (
@@ -28,94 +27,44 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
           </div>
           <h1 className="text-2xl sm:text-3xl font-serif font-bold text-slate-800 dark:text-white">CycleCare+</h1>
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-2">
-            {isLogin ? 'Welcome back to your sanctuary' : 'Begin your tracking journey'}
+            Enter your name or email to start tracking
           </p>
         </div>
 
         <div className="p-6 sm:p-8">
-          <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-xl sm:rounded-2xl mb-6 sm:mb-8">
-            <button 
-              onClick={() => setIsLogin(true)}
-              className={`flex-1 py-2 text-xs sm:text-sm font-bold rounded-lg sm:rounded-xl transition-all ${isLogin ? 'bg-white dark:bg-slate-700 text-rose-500 shadow-sm' : 'text-slate-400'}`}
-            >
-              Log In
-            </button>
-            <button 
-              onClick={() => setIsLogin(false)}
-              className={`flex-1 py-2 text-xs sm:text-sm font-bold rounded-lg sm:rounded-xl transition-all ${!isLogin ? 'bg-white dark:bg-slate-700 text-rose-500 shadow-sm' : 'text-slate-400'}`}
-            >
-              Sign Up
-            </button>
-          </div>
-
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {!isLogin && (
-              <div className="space-y-1">
-                <label className="text-[10px] font-bold text-slate-400 uppercase ml-2">Full Name</label>
-                <div className="relative">
-                  <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-slate-400 pointer-events-none" />
-                  <input 
-                    type="text" 
-                    required 
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    placeholder="Jane Doe"
-                    className="w-full pl-10 sm:pl-12 pr-4 py-3 sm:py-3.5 bg-slate-50 dark:bg-slate-800 border-none rounded-xl sm:rounded-2xl focus:ring-2 focus:ring-rose-400 outline-none transition-all dark:text-white text-sm"
-                  />
-                </div>
-              </div>
-            )}
-
+          <form onSubmit={handleSubmit} className="space-y-6">
             <div className="space-y-1">
-              <label className="text-[10px] font-bold text-slate-400 uppercase ml-2">Email Address</label>
+              <label className="text-[10px] font-bold text-slate-400 uppercase ml-2">Profile Identifier</label>
               <div className="relative">
-                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-slate-400 pointer-events-none" />
+                <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-slate-400 pointer-events-none" />
                 <input 
-                  type="email" 
+                  type="text" 
                   required 
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="name@example.com"
+                  value={identifier}
+                  onChange={(e) => setIdentifier(e.target.value)}
+                  placeholder="e.g. Jane Doe or jane@example.com"
                   className="w-full pl-10 sm:pl-12 pr-4 py-3 sm:py-3.5 bg-slate-50 dark:bg-slate-800 border-none rounded-xl sm:rounded-2xl focus:ring-2 focus:ring-rose-400 outline-none transition-all dark:text-white text-sm"
                 />
               </div>
             </div>
 
-            <div className="space-y-1">
-              <label className="text-[10px] font-bold text-slate-400 uppercase ml-2">Password</label>
-              <div className="relative">
-                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-slate-400 pointer-events-none" />
-                <input 
-                  type={showPassword ? "text" : "password"} 
-                  required 
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••"
-                  className="w-full pl-10 sm:pl-12 pr-12 py-3 sm:py-3.5 bg-slate-50 dark:bg-slate-800 border-none rounded-xl sm:rounded-2xl focus:ring-2 focus:ring-rose-400 outline-none transition-all dark:text-white text-sm"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-rose-500 transition-colors"
-                >
-                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                </button>
-              </div>
-            </div>
-
             <button 
               type="submit"
-              className="w-full py-3.5 sm:py-4 mt-2 bg-rose-500 hover:bg-rose-600 text-white font-bold rounded-xl sm:rounded-2xl shadow-lg shadow-rose-200 dark:shadow-none transition-all active:scale-[0.98] flex items-center justify-center space-x-2 text-sm sm:text-base"
+              className="w-full py-3.5 sm:py-4 bg-rose-500 hover:bg-rose-600 text-white font-bold rounded-xl sm:rounded-2xl shadow-lg shadow-rose-200 dark:shadow-none transition-all active:scale-[0.98] flex items-center justify-center space-x-2 text-sm sm:text-base"
             >
-              <span>{isLogin ? 'Sign In' : 'Create Account'}</span>
+              <span>Get Started</span>
               <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5" />
             </button>
           </form>
 
-          <div className="mt-6 sm:mt-8 flex items-center justify-center space-x-2 text-[10px] sm:text-xs text-slate-400">
+          <div className="mt-8 flex items-center justify-center space-x-2 text-[10px] sm:text-xs text-slate-400 bg-slate-50 dark:bg-slate-800/50 py-3 rounded-xl border border-slate-100 dark:border-slate-800">
             <Sparkles className="w-3 h-3 sm:w-4 sm:h-4 text-yellow-400" />
-            <span>Encrypted local session enabled</span>
+            <span>Cloud sync enabled automatically</span>
           </div>
+          
+          <p className="mt-6 text-center text-[10px] text-slate-400 leading-relaxed px-4">
+            Use the same name on any device to see your data. No passwords needed.
+          </p>
         </div>
       </div>
     </div>

@@ -12,9 +12,8 @@ export interface CycleModel {
 
 export interface UserModel {
   _id: string;             // MongoDB unique identifier
-  email: string;           // Primary key for lookup
+  email: string;           // Primary identifier (Name or Email)
   name: string;
-  password?: string;
   profile?: CycleModel;    // Embedded cycle document
   createdAt: number;
 }

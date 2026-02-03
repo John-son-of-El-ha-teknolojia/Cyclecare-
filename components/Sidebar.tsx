@@ -6,7 +6,7 @@ import {
   Heart, 
   Moon,
   Sun,
-  LogOut,
+  UserCircle,
   User as UserIcon
 } from 'lucide-react';
 import { UserProfile } from '../types';
@@ -67,16 +67,16 @@ const Sidebar: React.FC<SidebarProps> = ({
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-bold text-slate-800 dark:text-slate-200 truncate">{authUserName}</p>
-              <p className="text-[10px] text-slate-400 font-medium uppercase tracking-tighter">Member Since 2024</p>
+              <p className="text-[10px] text-slate-400 font-medium uppercase tracking-tighter">Active Profile</p>
             </div>
           </div>
           
           <button 
             onClick={onLogout}
-            className="w-full flex items-center justify-center space-x-2 py-2 text-xs font-bold text-slate-500 dark:text-slate-400 hover:text-red-500 transition-colors"
+            className="w-full flex items-center justify-center space-x-2 py-2 text-xs font-bold text-slate-500 dark:text-slate-400 hover:text-rose-500 transition-colors"
           >
-            <LogOut className="w-4 h-4" />
-            <span>Sign Out</span>
+            <UserCircle className="w-4 h-4" />
+            <span>Switch Profile</span>
           </button>
         </div>
 

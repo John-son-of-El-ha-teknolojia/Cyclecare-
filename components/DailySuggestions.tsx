@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Sparkles, ArrowRight, HeartHandshake, BrainCircuit, Loader2, AlertCircle } from 'lucide-react';
+import { Sparkles, BrainCircuit, Loader2, AlertCircle } from 'lucide-react';
 import { UserProfile } from '../types';
 import { getCycleInfo } from '../utils/cycleCalculations';
 import { ROMANTIC_SUGGESTIONS, PHASE_COLORS } from '../constants';
@@ -21,28 +21,28 @@ const DailySuggestions: React.FC<DailySuggestionsProps> = ({ user }) => {
     setIsLoadingAi(true);
     setError(null);
     try {
-      // Assuming process.env.API_KEY is correctly injected by the build tool/platform
-      const ai = new GoogleGenAI({ apiKey: process.env.VITE_API_KEY });
+      // Fix: Use process.env.API_KEY exclusively for initialization as per @google/genai guidelines
+      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
       const response = await ai.models.generateContent({
         model: 'gemini-3-flash-preview',
-        contents: `The user is currently in the ${phase} phase (Day ${dayOfCycle} of a ${user.cycleLength}-day cycle). 
-        Provide a brief, supportive, and romantic tip (max 2 sentences) for their partner to help them feel loved and understood today. 
-        Focus on the hormonal shift of the ${phase} phase.`,
+        contents: `The user is in the ${phase} phase (Day ${dayOfCycle} of ${user.cycleLength} days). 
+        Provide one single brief romantic suggestion for her partner to help her feel loved. Maximum 20 words.`,
         config: {
-          systemInstruction: "You are a relationship and wellness coach. Be concise, warm, and encouraging.",
-          temperature: 0.7,
+          systemInstruction: "You are a warm relationship expert.",
+          temperature: 0.8,
         }
       });
       
-      if (response && response.text) {
-        setAiInsight(response.text);
+      const text = response.text;
+      if (text) {
+        setAiInsight(text);
       } else {
-        throw new Error("No response text");
+        throw new Error("Empty AI response");
       }
     } catch (err) {
-      console.error("Gemini AI Error:", err);
-      setError("AI Insight paused");
-      setAiInsight("Focus on gentle presence and listening to her needs today.");
+      console.error("AI Insight Error:", err);
+      setError("AI Offline");
+      setAiInsight("A gentle hug and listening ear are always the perfect choice today.");
     } finally {
       setIsLoadingAi(false);
     }
@@ -64,23 +64,23 @@ const DailySuggestions: React.FC<DailySuggestionsProps> = ({ user }) => {
               Suggestions for {user.name}
             </h2>
             <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
-              Day <span className="font-bold text-slate-800 dark:text-slate-200">{dayOfCycle}</span> of her cycle.
+              Currently on Day <span className="font-bold text-slate-800 dark:text-slate-200">{dayOfCycle}</span>
             </p>
           </div>
           
           <div className="flex items-center space-x-3 bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm xl:min-w-[320px]">
-            <div className={`p-2 rounded-xl flex-shrink-0 ${error ? 'bg-amber-100 dark:bg-amber-900/30' : 'bg-purple-100 dark:bg-purple-900/30'}`}>
-              {error ? <AlertCircle className="w-5 h-5 text-amber-500" /> : <BrainCircuit className="w-5 h-5 text-purple-500" />}
+            <div className={`p-2 rounded-xl flex-shrink-0 ${error ? 'bg-amber-100 dark:bg-amber-900/30' : 'bg-rose-100 dark:bg-rose-900/30'}`}>
+              {error ? <AlertCircle className="w-5 h-5 text-amber-500" /> : <BrainCircuit className="w-5 h-5 text-rose-500" />}
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-[9px] text-slate-400 font-bold uppercase tracking-widest mb-0.5">AI Insights</p>
               {isLoadingAi ? (
                 <div className="flex items-center space-x-2">
-                  <Loader2 className="w-3 h-3 text-purple-400 animate-spin" />
+                  <Loader2 className="w-3 h-3 text-rose-400 animate-spin" />
                   <span className="text-[10px] text-slate-400 italic">Thinking...</span>
                 </div>
               ) : (
-                <p className="text-[10px] sm:text-xs italic text-slate-600 dark:text-slate-300 leading-snug line-clamp-3">
+                <p className="text-[10px] sm:text-xs italic text-slate-600 dark:text-slate-300 leading-snug">
                   {aiInsight}
                 </p>
               )}

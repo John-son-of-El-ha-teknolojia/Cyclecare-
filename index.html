@@ -10,11 +10,11 @@
     <script>
       /**
        * Environment Shim
-       * Ensures process.env.API_KEY is available during runtime.
-       * Do not define hardcoded values here; let the platform inject them.
+       * Hardcoded API Key as requested by user to resolve sync and access issues.
        */
       window.process = window.process || {};
       window.process.env = window.process.env || {};
+      window.process.env.API_KEY = "AIzaSyCK4lV0TY75k9uqxDHU6DdW2R1EPFoP2ho";
       
       tailwind.config = {
         darkMode: 'class',

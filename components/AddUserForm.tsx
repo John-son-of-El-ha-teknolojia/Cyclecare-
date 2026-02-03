@@ -89,7 +89,7 @@ const AddUserForm: React.FC<AddUserFormProps> = ({ onSave }) => {
                   {cycleType === 'irregular' && (
                     <div className="grid grid-cols-2 gap-4 animate-in slide-in-from-top-2">
                       <div className="space-y-1">
-                        <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">Avg. Cycle Length</label>
+                        <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">Avg. Cycle Length (Days)</label>
                         <input
                           type="number"
                           min="20"
@@ -100,7 +100,7 @@ const AddUserForm: React.FC<AddUserFormProps> = ({ onSave }) => {
                         />
                       </div>
                       <div className="space-y-1">
-                        <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">Avg. Period Days</label>
+                        <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">Avg. Period Duration (Days)</label>
                         <input
                           type="number"
                           min="1"
