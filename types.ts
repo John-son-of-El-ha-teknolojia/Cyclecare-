@@ -1,15 +1,30 @@
 
 export type CyclePhase = 'Menstrual' | 'Follicular' | 'Ovulation' | 'Luteal';
 
-export interface UserProfile {
-  id: string;
+/**
+ * MongoDB-style Models
+ */
+export interface CycleModel {
+  lastPeriodStart: string; // ISO String (YYYY-MM-DD)
+  cycleLength: number;     // e.g., 28 or custom value
+  periodDuration: number;  // e.g., 5 days
+}
+
+export interface UserModel {
+  _id: string;             // MongoDB unique identifier
+  email: string;           // Primary key for lookup
   name: string;
-  email?: string; // Linked for database lookup
-  password?: string; // Stored for verification
-  lastPeriodStart: string; // ISO String
+  password?: string;
+  profile?: CycleModel;    // Embedded cycle document
+  createdAt: number;
+}
+
+export interface UserProfile extends UserModel {
+  // UI helper extension (matches legacy components)
+  id: string; 
+  lastPeriodStart: string;
   cycleLength: number;
   periodDuration: number;
-  createdAt: number;
 }
 
 export interface DayData {
@@ -21,7 +36,7 @@ export interface DayData {
 }
 
 export interface AppState {
-  users: UserProfile[];
+  users: UserModel[];
   currentUserId: string | null;
   darkMode: boolean;
 }
